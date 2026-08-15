@@ -12,11 +12,17 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Install NDK 26
+        run: |
+          echo "y" | sdkmanager "ndk;26.1.10909125"
+          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/26.1.10909125" >> "$GITHUB_ENV"
+
       - name: Build the mod
         uses: geode-sdk/build-geode-mod@main
         id: build
         with:
           target: Android64
+          android-ndk-version: r26d
 
       - uses: actions/upload-artifact@v4
         if: success()
