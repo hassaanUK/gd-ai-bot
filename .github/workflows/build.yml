@@ -1,0 +1,49 @@
+name: Build Geode Mod
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: r26d
+          add-to-path: true
+
+      - name: Clone Geode SDK
+        run: |
+          git clone --depth 1 https://github.com/geode-sdk/geode.git $HOME/geode-sdk
+          echo GEODE_SDK=$HOME/geode-sdk >> $GITHUB_ENV
+
+      - name: Configure CMake
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=$NDK/build/cmake/android.toolchain.cmake -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-23 -DGEODE_SDK=$HOME/geode-sdk
+        env:
+          NDK: ${{ steps.setup-ndk.outputs.ndk-path }}
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Package .geode
+        run: |
+          mkdir -p pkg
+          cp mod.json pkg/
+          find build -name '*.so' -exec cp {} pkg/ \;
+          cd pkg && zip -r ../hassaanuk.gd-ai-bot.geode .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hassaanuk.gd-ai-bot.geode
+          path: hassaanuk.gd-ai-bot.geode
+          retention-days: 30
