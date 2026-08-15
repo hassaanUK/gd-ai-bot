@@ -99,8 +99,8 @@ class $modify(AIPauseLayer, PauseLayer) {
 };
 
 class $modify(AIKeyboard, CCKeyboardDispatcher) {
-    bool dispatchKeyboardMSG(enumKeyCodes key, bool isKeyDown, bool isKeyRepeat) {
-        bool result = CCKeyboardDispatcher::dispatchKeyboardMSG(key, isKeyDown, isKeyRepeat);
+    bool dispatchKeyboardMSG(enumKeyCodes key, bool isKeyDown, bool isKeyRepeat, double extra) {
+        bool result = CCKeyboardDispatcher::dispatchKeyboardMSG(key, isKeyDown, isKeyRepeat, extra);
         if (key == enumKeyCodes::KEY_B && isKeyDown && !isKeyRepeat) {
             auto* pl = PlayLayer::get();
             if (pl && !pl->m_isPaused) {
