@@ -10,14 +10,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: geode-sdk/build-geode-mod@main
+      - name: Build the mod
+        uses: geode-sdk/build-geode-mod@main
         id: build
         with:
           target: Android64
-          sdk: latest
-          android-ndk-version: r26d
 
       - uses: actions/upload-artifact@v4
         if: success()
