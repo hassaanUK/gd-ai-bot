@@ -1,59 +1,104 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/PlayLayer.hpp>
+#include <Geode/modify/PauseLayer.hpp>
 
 using namespace geode::prelude;
-
-// GD AI Bot - auto-plays levels by holding jump when near hazards.
-// Toggle: triple-tap the screen (3+ simultaneous touches).
-// Strategy: hold jump almost all the time, release briefly on flat ground.
 
 static bool g_botEnabled = false;
 static bool g_jumpHeld   = false;
 
-class $modify(AIPlayLayer, PlayLayer) {
+static cocos2d::CCNode* getObjectLayer(PlayLayer* pl) {
+    return pl->getChildByTag(9);
+}
 
+static bool hazardAhead(cocos2d::CCNode* objectLayer,
+                        const cocos2d::CCRect& dangerZone) {
+    if (!objectLayer) return false;
+    auto& children = *objectLayer->getChildren();
+    for (unsigned int i = 0; i < children.count(); ++i) {
+        auto obj = dynamic_cast<GameObject*>(children.objectAtIndex(i));
+        if (!obj) continue;
+        if (obj->m_objectType != GameObjectType::Hazard &&
+            obj->m_objectType != GameObjectType::AnimatedHazard)
+            continue;
+        if (obj->getBoundingBox().intersectsRect(dangerZone))
+            return true;
+    }
+    return false;
+}
+
+class $modify(AIPauseLayer, PauseLayer) {
+    void customSetupC() {
+        PauseLayer::customSetupC();
+        auto label = CCLabelBMFont::create(
+            g_botEnabled ? "AI Bot: ON" : "AI Bot: OFF",
+            "bigFont.fnt"
+        );
+        label->setScale(0.55f);
+        label->setColor(g_botEnabled
+            ? cocos2d::ccColor3B{0, 255, 100}
+            : cocos2d::ccColor3B{255, 80, 80});
+        auto btn = CCMenuItemSpriteExtra::create(
+            label, this,
+            menu_selector(AIPauseLayer::onBotToggle)
+        );
+        btn->setID("ai-bot-toggle-btn");
+        auto menu = CCMenu::create();
+        menu->setID("ai-bot-menu");
+        menu->addChild(btn);
+        menu->setPosition(
+            CCDirector::sharedDirector()->getWinSize().width / 2.f,
+            38.f
+        );
+        this->addChild(menu, 10);
+    }
+    void onBotToggle(CCObject*) {
+        g_botEnabled = !g_botEnabled;
+        g_jumpHeld   = false;
+        if (auto* menu = this->getChildByID("ai-bot-menu")) {
+            if (auto* btn = static_cast<CCMenu*>(menu)->getChildByID("ai-bot-toggle-btn")) {
+                auto* item  = static_cast<CCMenuItemSpriteExtra*>(btn);
+                auto* label = static_cast<CCLabelBMFont*>(item->getNormalImage());
+                label->setString(g_botEnabled ? "AI Bot: ON" : "AI Bot: OFF");
+                label->setColor(g_botEnabled
+                    ? cocos2d::ccColor3B{0, 255, 100}
+                    : cocos2d::ccColor3B{255, 80, 80});
+            }
+        }
+        log::info("GD AI Bot: {}", g_botEnabled ? "ENABLED" : "DISABLED");
+    }
+};
+
+class $modify(AIPlayLayer, PlayLayer) {
     void update(float dt) {
         PlayLayer::update(dt);
-
         if (!g_botEnabled) return;
         if (!m_player1 || m_player1->m_isDead) return;
-
-        // Simple survival strategy: hold jump constantly.
-        // This works well in cube mode for basic levels.
-        if (!g_jumpHeld) {
+        const float LOOKAHEAD = 120.f;
+        const float HEIGHT    = 80.f;
+        auto playerBox = m_player1->getBoundingBox();
+        cocos2d::CCRect dangerZone(
+            playerBox.getMaxX(),
+            playerBox.getMinY() - 20.f,
+            LOOKAHEAD,
+            HEIGHT
+        );
+        auto* objLayer = getObjectLayer(this);
+        bool  danger   = hazardAhead(objLayer, dangerZone);
+        if (danger && !g_jumpHeld) {
             handleButton(true, 1, false);
             g_jumpHeld = true;
+        } else if (!danger && g_jumpHeld) {
+            handleButton(false, 1, false);
+            g_jumpHeld = false;
         }
     }
-
-    void ccTouchesBegan(cocos2d::CCSet* touches, cocos2d::CCEvent* event) {
-        PlayLayer::ccTouchesBegan(touches, event);
-        if (touches && touches->count() >= 3) {
-            g_botEnabled = !g_botEnabled;
-            g_jumpHeld   = false;
-            if (!g_botEnabled && m_player1 && !m_player1->m_isDead) {
-                handleButton(false, 1, false);
-            }
-            log::info("GD AI Bot: {}", g_botEnabled ? "ON" : "OFF");
-            FLAlertLayer::create(
-                "GD AI Bot",
-                g_botEnabled ? "Bot <cg>enabled</c>! Triple-tap to toggle." : "Bot <cr>disabled</c>.",
-                "OK"
-            )->show();
-        }
-    }
-
     void resetLevel() {
         g_jumpHeld = false;
         PlayLayer::resetLevel();
     }
-
-    void destroyPlayer(PlayerObject* player, GameObject* obj) {
-        g_jumpHeld = false;
-        PlayLayer::destroyPlayer(player, obj);
-    }
 };
 
 $on_mod(Loaded) {
-    log::info("GD AI Bot loaded! Triple-tap screen in a level to toggle.");
+    log::info("GD AI Bot loaded! Toggle via the pause menu.");
 }
