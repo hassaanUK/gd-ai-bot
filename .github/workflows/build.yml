@@ -7,11 +7,22 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Install LLVM 19
+        run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 19
+          sudo apt-get install -y clang-19 lld-19
+          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 100
+          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-19 100
+          sudo update-alternatives --install /usr/bin/lld lld /usr/bin/lld-19 100
+          clang --version
 
       - name: Setup Android NDK
         uses: nttld/setup-ndk@v1
@@ -27,7 +38,7 @@ jobs:
 
       - name: Configure CMake
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=$NDK/build/cmake/android.toolchain.cmake -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-23 -DGEODE_SDK=$HOME/geode-sdk
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=$NDK/build/cmake/android.toolchain.cmake -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-23 -DGEODE_SDK=$HOME/geode-sdk -DCMAKE_C_COMPILER=clang-19 -DCMAKE_CXX_COMPILER=clang++-19
         env:
           NDK: ${{ steps.setup-ndk.outputs.ndk-path }}
 
