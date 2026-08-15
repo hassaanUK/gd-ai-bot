@@ -16,7 +16,7 @@ jobs:
         id: build
         with:
           target: Android64
-          android-ndk-version: "28.2.13676358"
+          android-ndk-version: "29.0.14206865"
 
       - uses: actions/upload-artifact@v4
         if: success()
