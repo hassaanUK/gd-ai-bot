@@ -17,6 +17,7 @@ jobs:
         with:
           target: Android64
           sdk: latest
+          android-ndk-version: r26d
 
       - uses: actions/upload-artifact@v4
         if: success()
