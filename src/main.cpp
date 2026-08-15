@@ -21,48 +21,43 @@ static bool hazardAhead(cocos2d::CCNode* objectLayer,
         if (obj->m_objectType != GameObjectType::Hazard &&
             obj->m_objectType != GameObjectType::AnimatedHazard)
             continue;
-        if (obj->getBoundingBox().intersectsRect(dangerZone))
+        if (obj->boundingBox().intersectsRect(dangerZone))
             return true;
     }
     return false;
 }
 
 class $modify(AIPauseLayer, PauseLayer) {
-    void customSetupC() {
-        PauseLayer::customSetupC();
+
+    static PauseLayer* create(bool p0) {
+        auto* layer = PauseLayer::create(p0);
+        if (!layer) return layer;
+        auto* self = static_cast<AIPauseLayer*>(layer);
         auto label = CCLabelBMFont::create(
             g_botEnabled ? "AI Bot: ON" : "AI Bot: OFF",
             "bigFont.fnt"
         );
         label->setScale(0.55f);
-        label->setColor(g_botEnabled
-            ? cocos2d::ccColor3B{0, 255, 100}
-            : cocos2d::ccColor3B{255, 80, 80});
-        auto btn = CCMenuItemSpriteExtra::create(
-            label, this,
-            menu_selector(AIPauseLayer::onBotToggle)
-        );
+        label->setColor(g_botEnabled ? ccColor3B{0,255,100} : ccColor3B{255,80,80});
+        auto btn = CCMenuItemSpriteExtra::create(label, self, menu_selector(AIPauseLayer::onBotToggle));
         btn->setID("ai-bot-toggle-btn");
         auto menu = CCMenu::create();
         menu->setID("ai-bot-menu");
         menu->addChild(btn);
-        menu->setPosition(
-            CCDirector::sharedDirector()->getWinSize().width / 2.f,
-            38.f
-        );
-        this->addChild(menu, 10);
+        menu->setPosition(CCDirector::sharedDirector()->getWinSize().width / 2.f, 38.f);
+        layer->addChild(menu, 10);
+        return layer;
     }
+
     void onBotToggle(CCObject*) {
         g_botEnabled = !g_botEnabled;
-        g_jumpHeld   = false;
+        g_jumpHeld = false;
         if (auto* menu = this->getChildByID("ai-bot-menu")) {
             if (auto* btn = static_cast<CCMenu*>(menu)->getChildByID("ai-bot-toggle-btn")) {
-                auto* item  = static_cast<CCMenuItemSpriteExtra*>(btn);
+                auto* item = static_cast<CCMenuItemSpriteExtra*>(btn);
                 auto* label = static_cast<CCLabelBMFont*>(item->getNormalImage());
                 label->setString(g_botEnabled ? "AI Bot: ON" : "AI Bot: OFF");
-                label->setColor(g_botEnabled
-                    ? cocos2d::ccColor3B{0, 255, 100}
-                    : cocos2d::ccColor3B{255, 80, 80});
+                label->setColor(g_botEnabled ? ccColor3B{0,255,100} : ccColor3B{255,80,80});
             }
         }
         log::info("GD AI Bot: {}", g_botEnabled ? "ENABLED" : "DISABLED");
@@ -75,30 +70,15 @@ class $modify(AIPlayLayer, PlayLayer) {
         if (!g_botEnabled) return;
         if (!m_player1 || m_player1->m_isDead) return;
         const float LOOKAHEAD = 120.f;
-        const float HEIGHT    = 80.f;
-        auto playerBox = m_player1->getBoundingBox();
-        cocos2d::CCRect dangerZone(
-            playerBox.getMaxX(),
-            playerBox.getMinY() - 20.f,
-            LOOKAHEAD,
-            HEIGHT
-        );
+        const float HEIGHT = 80.f;
+        auto playerBox = m_player1->boundingBox();
+        cocos2d::CCRect dangerZone(playerBox.getMaxX(), playerBox.getMinY() - 20.f, LOOKAHEAD, HEIGHT);
         auto* objLayer = getObjectLayer(this);
-        bool  danger   = hazardAhead(objLayer, dangerZone);
-        if (danger && !g_jumpHeld) {
-            handleButton(true, 1, false);
-            g_jumpHeld = true;
-        } else if (!danger && g_jumpHeld) {
-            handleButton(false, 1, false);
-            g_jumpHeld = false;
-        }
+        bool danger = hazardAhead(objLayer, dangerZone);
+        if (danger && !g_jumpHeld) { handleButton(true, 1, false); g_jumpHeld = true; }
+        else if (!danger && g_jumpHeld) { handleButton(false, 1, false); g_jumpHeld = false; }
     }
-    void resetLevel() {
-        g_jumpHeld = false;
-        PlayLayer::resetLevel();
-    }
+    void resetLevel() { g_jumpHeld = false; PlayLayer::resetLevel(); }
 };
 
-$on_mod(Loaded) {
-    log::info("GD AI Bot loaded! Toggle via the pause menu.");
-}
+$on_mod(Loaded) { log::info("GD AI Bot loaded! Toggle via the pause menu."); }
