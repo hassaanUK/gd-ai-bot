@@ -1,0 +1,28 @@
+{
+  "geode": "4.0.0",
+  "gd": { "android": "2.2074" },
+  "id": "hassaanuk.gd-ai-bot",
+  "name": "GD AI Bot",
+  "version": "1.0.0",
+  "developer": "hassaanUK",
+  "description": "AI bot that auto-plays GD levels. 3-finger tap to toggle.",
+  "tags": ["gameplay", "bot", "ai"],
+  "settings": {
+    "lookahead": {
+      "name": "Lookahead Distance (px)",
+      "description": "How far ahead to scan for obstacles",
+      "type": "float",
+      "default": 200.0,
+      "min": 50.0,
+      "max": 500.0
+    },
+    "vertical-tolerance": {
+      "name": "Vertical Tolerance (px)",
+      "description": "Vertical window for hazard detection",
+      "type": "float",
+      "default": 80.0,
+      "min": 20.0,
+      "max": 200.0
+    }
+  }
+}
