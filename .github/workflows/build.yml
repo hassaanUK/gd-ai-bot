@@ -16,6 +16,7 @@ jobs:
         id: build
         with:
           target: android
+          android-ndk-version: r26d
 
       - uses: actions/upload-artifact@v4
         with:
