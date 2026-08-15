@@ -23,6 +23,7 @@ static const std::unordered_set<int> HAZARDS = {
 static bool shouldJump(PlayerObject* p, PlayLayer* pl) {
     if (!p || !pl) return false;
     if (p->m_isShip || p->m_isBird || p->m_isDart) return true;
+
     auto pPos = p->getPosition();
     CCObject* raw;
     CCARRAY_FOREACH(pl->m_objects, raw) {
@@ -46,18 +47,35 @@ class $modify(BotPlayLayer, PlayLayer) {
         auto* p = m_player1;
         if (!p || p->m_isDead) return;
         bool jump = shouldJump(p, this);
-        if (jump && !s_holding) { pushButton(1, false); s_holding = true; }
-        else if (!jump && s_holding) { releaseButton(1, false); s_holding = false; }
+        if (jump && !s_holding) {
+            pushButton(1, false);
+            s_holding = true;
+        } else if (!jump && s_holding) {
+            releaseButton(1, false);
+            s_holding = false;
+        }
     }
-    void resetLevel() { PlayLayer::resetLevel(); s_holding = false; }
-    void onQuit() { PlayLayer::onQuit(); s_enabled = false; s_holding = false; }
+
+    void resetLevel() {
+        PlayLayer::resetLevel();
+        s_holding = false;
+    }
+
+    void onQuit() {
+        PlayLayer::onQuit();
+        s_enabled = false;
+        s_holding = false;
+    }
+
     void ccTouchesEnded(CCSet* touches, CCEvent* event) {
         PlayLayer::ccTouchesEnded(touches, event);
         if (touches && touches->count() >= 3) {
             s_enabled = !s_enabled;
             s_holding = false;
             if (!s_enabled) releaseButton(1, false);
-            Notification::create(s_enabled ? "AI Bot: ON" : "AI Bot: OFF", NotificationIcon::Success)->show();
+            auto msg = s_enabled ? "AI Bot: ON" : "AI Bot: OFF";
+            Notification::create(msg, NotificationIcon::Success, 2.0f)->show();
+            log::info("{}", msg);
         }
     }
 };
@@ -65,5 +83,6 @@ class $modify(BotPlayLayer, PlayLayer) {
 $on_mod(Loaded) {
     s_lookahead = Mod::get()->getSettingValue<double>("lookahead");
     s_vTol      = Mod::get()->getSettingValue<double>("vertical-tolerance");
-    log::info("GD AI Bot loaded. 3-finger tap to toggle.");
+    log::info("GD AI Bot loaded. Lookahead={}px vTol={}px. 3-finger tap to toggle.",
+              s_lookahead, s_vTol);
 }
