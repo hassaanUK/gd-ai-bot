@@ -5,9 +5,15 @@
   "name": "GD AI Bot",
   "version": "1.0.0",
   "developer": "hassaanUK",
-  "description": "AI bot that auto-plays GD levels. 3-finger tap to toggle.",
+  "description": "AI bot that auto-plays GD levels. Toggle in mod settings.",
   "tags": ["gameplay", "bot", "ai"],
   "settings": {
+    "enabled": {
+      "name": "Enable Bot",
+      "description": "Toggle the AI bot on/off",
+      "type": "bool",
+      "default": false
+    },
     "lookahead": {
       "name": "Lookahead Distance (px)",
       "description": "How far ahead to scan for obstacles",
