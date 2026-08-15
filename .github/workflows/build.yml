@@ -15,7 +15,7 @@ jobs:
       - uses: geode-sdk/build-geode-mod@main
         id: build
         with:
-          platform: Android
+          target: android
 
       - uses: actions/upload-artifact@v4
         with:
