@@ -3,7 +3,25 @@
   "gd": { "android": "2.2081" },
   "id": "hassaanuk.gd-ai-bot",
   "name": "GD AI Bot",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "developer": "hassaanUK",
-  "description": "AI bot that auto-plays GD levels."
+  "description": "AI bot that auto-plays GD levels. Pause menu button + B key (PC) to toggle.",
+  "settings": {
+    "lookahead": {
+      "name": "Lookahead Distance (px)",
+      "description": "How far ahead to scan for hazards",
+      "type": "float",
+      "default": 120.0,
+      "min": 40.0,
+      "max": 400.0
+    },
+    "height": {
+      "name": "Scan Height (px)",
+      "description": "Vertical height of the danger zone",
+      "type": "float",
+      "default": 80.0,
+      "min": 20.0,
+      "max": 200.0
+    }
+  }
 }
