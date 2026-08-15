@@ -16,9 +16,10 @@ jobs:
         id: build
         with:
           target: Android64
-          android-ndk-version: r26d
+          sdk: latest
 
       - uses: actions/upload-artifact@v4
+        if: success()
         with:
           name: hassaanuk.gd-ai-bot.geode
           path: ${{ steps.build.outputs.build-output }}
